@@ -38,7 +38,7 @@ export function useDeployNFT() {
       }
     );
 
-    const userOpResponse = await handleBiconomyPaymentSponsor(partialUserOp);
+    const userOpResponse = await handleBiconomyPayment(partialUserOp);
 
     console.log(`useMintNFT: userOps Hash: ${userOpResponse.userOpHash}`);
     const transactionUserOpDetails = await userOpResponse.wait();
