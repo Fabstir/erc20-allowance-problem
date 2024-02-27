@@ -1,8 +1,7 @@
 import { BigNumber } from "@ethersproject/bignumber";
 import { parseUnits } from "@ethersproject/units";
 import { JsonRpcProvider, Provider } from "@ethersproject/providers";
-
-import config from "../../config.json";
+import { UserOperation } from "@biconomy/core-types";
 
 import {
   IHybridPaymaster,
@@ -60,7 +59,7 @@ export default function useBiconomyPayment(
     const feeQuotesResponse =
       await biconomyPaymaster.getPaymasterFeeQuotesOrData(partialUserOp, {
         mode: PaymasterMode.ERC20,
-        tokenList: [],
+        tokenList: [process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS as string],
         preferredToken: process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS,
       });
 
@@ -137,11 +136,33 @@ export default function useBiconomyPayment(
    * @param {any} userOp - The user operation to handle Biconomy payment for.
    * @returns {Promise<any>} - The user operation response.
    */
-  const handleBiconomyPaymentSponsor = async (userOp: any) => {
+  const handleBiconomyPaymentSponsor = async (
+    userOp: Partial<UserOperation>
+  ) => {
     if (!smartAccount)
       throw new Error(
         `useMintNestableNFT: handleBiconomyPayment: smartAccount is undefined`
       );
+
+    const biconomyPaymaster =
+      smartAccount.paymaster as IHybridPaymaster<SponsorUserOperationDto>;
+    if (!biconomyPaymaster) return;
+
+    let paymasterServiceData = {
+      mode: PaymasterMode.SPONSORED, // - mandatory // now we know chosen fee token and requesting paymaster and data for it
+      feeTokenAddress: process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS,
+      // optional params..
+      calculateGasLimits: true, // Always recommended and especially when using token paymaster
+    };
+
+    const paymasterAndDataResponse =
+      await biconomyPaymaster.getPaymasterAndData(userOp, paymasterServiceData);
+    console.log(
+      "handleAAPayment: paymasterAndDataWithLimits",
+      paymasterAndDataResponse
+    );
+
+    userOp.paymasterAndData = paymasterAndDataResponse.paymasterAndData;
 
     const userOpResponse = await smartAccount.sendUserOp(userOp);
     return userOpResponse;
