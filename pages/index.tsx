@@ -2,7 +2,9 @@ import { Inter } from "next/font/google";
 import { useContext, useEffect, useState } from "react";
 import BlockchainContext from "@/state/BlockchainContext";
 import useParticleAuth from "@/src/blockchain/useParticleAuth";
-import { useDeployNFT } from "../src/blockchain/useDeployNFT";
+import { useDeployNFT } from "@/src/blockchain/useDeployNFT";
+import { useDeployNFTNative } from "@/src/blockchain/useDeployNFTNative";
+import { PaymasterMode } from "@biconomy/paymaster";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,6 +24,7 @@ export default function Home() {
   const [userInfo, setUserInfo] = useState<any>(undefined);
 
   const { deployNFT } = useDeployNFT();
+  const { deployNFTNative } = useDeployNFTNative();
 
   const connect = async () => {
     try {
@@ -59,8 +62,12 @@ export default function Home() {
     setSmartAccountAddressFn();
   }, [smartAccount]);
 
-  async function handleClick() {
-    await deployNFT();
+  async function handleClick(mode: PaymasterMode) {
+    await deployNFT(mode);
+  }
+
+  async function handleClickNative() {
+    await deployNFTNative();
   }
 
   async function handleLogout() {
@@ -99,8 +106,17 @@ export default function Home() {
         </button>
       )}
       <br />
+      <br />
 
-      <button onClick={handleClick}>Deploy NFT</button>
+      <button onClick={() => handleClick(PaymasterMode.ERC20)}>
+        Deploy NFT with AA ERC20
+      </button>
+      <br />
+      <button onClick={() => handleClick(PaymasterMode.SPONSORED)}>
+        Deploy NFT with AA Sponsored
+      </button>
+      <br />
+      <button onClick={handleClickNative}>Deploy NFT</button>
     </div>
   );
 }

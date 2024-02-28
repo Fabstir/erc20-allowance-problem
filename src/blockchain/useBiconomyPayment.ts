@@ -94,7 +94,7 @@ export default function useBiconomyPayment(
       {
         feeQuote: selectedFeeQuote,
         spender: spender,
-        maxApproval: false,
+        maxApproval: true,
       }
     );
 
@@ -155,14 +155,25 @@ export default function useBiconomyPayment(
       calculateGasLimits: true, // Always recommended and especially when using token paymaster
     };
 
-    const paymasterAndDataResponse =
+    const paymasterAndDataWithLimits =
       await biconomyPaymaster.getPaymasterAndData(userOp, paymasterServiceData);
     console.log(
       "handleAAPayment: paymasterAndDataWithLimits",
-      paymasterAndDataResponse
+      paymasterAndDataWithLimits
     );
 
-    userOp.paymasterAndData = paymasterAndDataResponse.paymasterAndData;
+    userOp.paymasterAndData = paymasterAndDataWithLimits.paymasterAndData;
+
+    if (
+      paymasterAndDataWithLimits.callGasLimit &&
+      paymasterAndDataWithLimits.verificationGasLimit &&
+      paymasterAndDataWithLimits.preVerificationGas
+    ) {
+      userOp.callGasLimit = paymasterAndDataWithLimits.callGasLimit;
+      userOp.verificationGasLimit =
+        paymasterAndDataWithLimits.verificationGasLimit;
+      userOp.preVerificationGas = paymasterAndDataWithLimits.preVerificationGas;
+    }
 
     const userOpResponse = await smartAccount.sendUserOp(userOp);
     return userOpResponse;
